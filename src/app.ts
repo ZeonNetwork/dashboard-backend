@@ -28,6 +28,10 @@ if (process.env.ENVIRONMENT === 'production') {
 
 app.disable('x-powered-by');
 
+app.get('/healthcheck', (req, res) => {
+  res.send('OK');
+});
+
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (config.app.forceHttps === 'enabled') {
     if (!req.secure) {

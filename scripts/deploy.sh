@@ -9,6 +9,7 @@ function deploy {
 	SSH_PARAMS="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 	rsync -avz -e "${SSH_PARAMS}" "${LOCAL_PATH}" cicd@"$1":"$2" --delete \
+		--exclude 'docker-compose.yml' \
 		--exclude 'deploy_rsa' \
 		--exclude '.git' \
 		--exclude 'npm-debug.log' \

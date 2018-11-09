@@ -23,20 +23,20 @@ const phoneNumberRegex = /^\+[1-9]\d{1,14}$/;
 
 export function createUser(req: Request, res: Response, next: NextFunction) {
   const schemaWithRequiredPhone = Joi.object().keys({
-    firstName: Joi.string().min(3).required(),
-    lastName: Joi.string().min(3).required(),
+    // firstName: Joi.string().min(3).required(),
+    // lastName: Joi.string().min(3).required(),
     email: Joi.string().email().required(),
-    phone: Joi.string().required().regex(phoneNumberRegex).options({
-      language: {
-        string: {
-          regex: {
-            base: translateCustomMessage('must be a valid phone number (+1234567890)', req)
-          }
-        }
-      }
-    }),
-    country: Joi.string().min(2).required(),
-    dob: Joi.string().isoDate().required(),
+    // phone: Joi.string().required().regex(phoneNumberRegex).options({
+    //   language: {
+    //     string: {
+    //       regex: {
+    //         base: translateCustomMessage('must be a valid phone number (+1234567890)', req)
+    //       }
+    //     }
+    //   }
+    // }),
+    // country: Joi.string().min(2).required(),
+    // dob: Joi.string().isoDate().required(),
     password: Joi.string().required().regex(passwordRegex).options({
       language: {
         string: {
@@ -58,20 +58,20 @@ export function createUser(req: Request, res: Response, next: NextFunction) {
   });
 
   const schemaWithOptionalPhone = Joi.object().keys({
-    firstName: Joi.string().min(3).required(),
-    lastName: Joi.string().min(3).required(),
+    // firstName: Joi.string().min(3).required(),
+    // lastName: Joi.string().min(3).required(),
     email: Joi.string().email().required(),
-    phone: Joi.string().optional().regex(phoneNumberRegex).options({
-      language: {
-        string: {
-          regex: {
-            base: translateCustomMessage('must be a valid phone number (+1234567890)', req)
-          }
-        }
-      }
-    }),
-    country: Joi.string().min(2).required(),
-    dob: Joi.string().isoDate().required(),
+    // phone: Joi.string().optional().regex(phoneNumberRegex).options({
+    //   language: {
+    //     string: {
+    //       regex: {
+    //         base: translateCustomMessage('must be a valid phone number (+1234567890)', req)
+    //       }
+    //     }
+    //   }
+    // }),
+    // country: Joi.string().min(2).required(),
+    // dob: Joi.string().isoDate().required(),
     password: Joi.string().required().regex(passwordRegex).options({
       language: {
         string: {
