@@ -141,9 +141,14 @@ declare interface UserData {
   passwordHash?: string;
   source?: any;
   scope?: string;
+  oldId: number;
+  icoBalance: number;
+  createdAt: number;
+  firstLogin: boolean;
 }
 
 declare interface InputUserData extends UserData {
+  importSecret: string;
   password: string;
 }
 
@@ -182,7 +187,7 @@ declare interface InitiateLoginResult extends BaseInitiateResult {
 }
 
 declare interface VerifyLoginResult extends InitiateLoginResult {
-
+  wallets: Array<NewWallet>;
 }
 
 declare interface ActivationUserData {
@@ -211,7 +216,7 @@ declare interface VerifyLoginInput {
 }
 
 declare interface ResendVerificationInput {
-  email: string
+  email: string;
 }
 
 declare interface InitiateChangePasswordInput {
@@ -326,7 +331,7 @@ declare interface CoinpaymentsTransactionData {
   buyer_email: string;
 }
 
-declare interface CoinpaymentsTransactionInfo { 
+declare interface CoinpaymentsTransactionInfo {
   time_created: number;
   time_expires: number;
   status: number;
@@ -391,7 +396,7 @@ declare interface IPNApiTypeResponse {
 }
 
 declare interface PaymentGateTransactionInterface {
-	type: string;
+  type: string;
   status: string;
   userEmail: string;
   expiredOn: number;

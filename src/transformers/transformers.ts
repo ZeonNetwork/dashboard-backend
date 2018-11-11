@@ -31,12 +31,17 @@ export function transformCreatedInvestor(investor: Investor): CreatedUserData {
     referralCode: investor.referralCode,
     kycStatus: investor.kycStatus,
     referral: investor.referral,
-    source: investor.source
+    source: investor.source,
+    oldId: investor.oldId,
+    firstLogin: investor.firstLogin,
+    icoBalance: investor.icoBalance,
+    createdAt: investor.createdAt
   };
 }
 
-export function transformVerifiedToken(token: VerifiedToken): VerifyLoginResult {
+export function transformVerifiedToken(token: VerifiedToken, resultWallets: Array<NewWallet>): VerifyLoginResult {
   return {
+    wallets: resultWallets,
     accessToken: token.token,
     isVerified: token.verified,
     verification: {

@@ -4,13 +4,14 @@ import { Web3ClientType, Web3ClientInterface } from './web3.client';
 import { EmailQueueType, EmailQueueInterface } from '../queues/email.queue';
 import { injectable, inject } from 'inversify';
 import 'reflect-metadata';
+import * as uuid from 'node-uuid';
 
 import {
   UserExists,
   UserNotFound,
   InvalidPassword,
   UserNotActivated,
-  TokenNotFound, ReferralDoesNotExist, ReferralIsNotActivated, AuthenticatorError, InviteIsNotAllowed, UserActivated
+  TokenNotFound, ReferralDoesNotExist, ReferralIsNotActivated, AuthenticatorError, InviteIsNotAllowed, UserActivated, WrongImportSecret
 } from '../exceptions/exceptions';
 import config from '../config';
 import { Investor } from '../entities/investor';
@@ -54,7 +55,8 @@ export class UserService implements UserServiceInterface {
     @inject(EmailQueueType) private emailQueue: EmailQueueInterface,
     @inject(KycProviderType) private kycProvider: KycProviderInterface,
     @inject(EmailTemplateServiceType) private emailTemplateService: EmailTemplateServiceInterface
-  ) { }
+  ) {
+  }
 
   /**
    * Save user's data
@@ -72,7 +74,7 @@ export class UserService implements UserServiceInterface {
       throw new UserExists('User already exists');
     }
 
-    const logger = this.logger.sub({ email }, '[create] ');
+    const logger = this.logger.sub({email}, '[create] ');
 
     if (userData.referral) {
       logger.debug('Find referral');
@@ -90,36 +92,54 @@ export class UserService implements UserServiceInterface {
       }
     }
 
-    const encodedEmail = encodeURIComponent(email);
-    const link = `${ config.app.frontendUrl }/auth/signup?type=activate&code={{{CODE}}}&verificationId={{{VERIFICATION_ID}}}&email=${ encodedEmail }`;
+    let verificationId;
 
-    logger.debug('Init verification');
+    if (userData.importSecret && userData.importSecret !== process.env.IMPORT_SECRET) {
+      throw new WrongImportSecret('Import Secret not valid');
+    }
 
-    const verification = await this.verificationClient.initiateVerification(EMAIL_VERIFICATION, {
-      consumer: email,
-      issuer: config.app.companyName,
-      template: {
-        fromEmail: config.email.from.general,
-        subject: `Verify your email at ${config.app.companyName}`,
-        body: await this.emailTemplateService.getRenderedTemplate('init-signup', { name: `${userData.firstName} ${userData.lastName}`, link: link })
-      },
-      generateCode: {
-        length: 6,
-        symbolSet: [
-          'DIGITS'
-        ]
-      },
-      policy: {
-        expiredOn: '24:00:00'
-      },
-      payload: {
-        scope: ACTIVATE_USER_SCOPE
-      }
-    });
+    if (!userData.importSecret || userData.importSecret !== process.env.IMPORT_SECRET) {
+      delete userData.oldId;
+      delete userData.icoBalance;
+      delete userData.createdAt;
+
+      const encodedEmail = encodeURIComponent(email);
+      const link = `${ config.app.frontendUrl }/auth/signup?type=activate&code={{{CODE}}}&verificationId={{{VERIFICATION_ID}}}&email=${ encodedEmail }`;
+
+      logger.debug('Init verification');
+
+      const verification = await this.verificationClient.initiateVerification(EMAIL_VERIFICATION, {
+        consumer: email,
+        issuer: config.app.companyName,
+        template: {
+          fromEmail: config.email.from.general,
+          subject: `Verify your email at ${config.app.companyName}`,
+          // body: await this.emailTemplateService.getRenderedTemplate('init-signup', { name: `${userData.firstName} ${userData.lastName}`, link: link })
+          body: await this.emailTemplateService.getRenderedTemplate('init-signup', {link: link})
+        },
+        generateCode: {
+          length: 6,
+          symbolSet: [
+            'DIGITS'
+          ]
+        },
+        policy: {
+          expiredOn: '24:00:00'
+        },
+        payload: {
+          scope: ACTIVATE_USER_SCOPE
+        }
+      });
+      verificationId = verification.verificationId;
+    }else {
+      verificationId = uuid.v4();
+      userData.firstLogin = true;
+    }
+    delete userData.importSecret;
 
     userData.passwordHash = bcrypt.hashSync(userData.password);
     const investor = Investor.createInvestor(userData, {
-      verificationId: verification.verificationId
+      verificationId: verificationId
     });
 
     await getConnection().mongoManager.save(investor);
@@ -145,7 +165,7 @@ export class UserService implements UserServiceInterface {
       throw new UserActivated('User is activated already');
     }
 
-    const logger = this.logger.sub({ email }, '[resend] ');
+    const logger = this.logger.sub({email}, '[resend] ');
 
     const encodedEmail = encodeURIComponent(email);
     const link = `${ config.app.frontendUrl }/auth/signup?type=activate&code={{{CODE}}}&verificationId={{{VERIFICATION_ID}}}&email=${ encodedEmail }`;
@@ -158,7 +178,8 @@ export class UserService implements UserServiceInterface {
       template: {
         fromEmail: config.email.from.general,
         subject: `Verify your email at ${config.app.companyName}`,
-        body: await this.emailTemplateService.getRenderedTemplate('init-signup', {name: user.name, link: link})
+        // body: await this.emailTemplateService.getRenderedTemplate('init-signup', {name: user.name, link: link})
+        body: await this.emailTemplateService.getRenderedTemplate('init-signup', {link: link})
       },
       policy: {
         expiredOn: '24:00:00',
@@ -191,7 +212,7 @@ export class UserService implements UserServiceInterface {
       throw new UserNotFound('User is not found');
     }
 
-    if (!user.isVerified) {
+    if (!user.isVerified && !user.oldId) {
       throw new UserNotActivated('Account is not activated! Please check your email');
     }
 
@@ -201,7 +222,7 @@ export class UserService implements UserServiceInterface {
       throw new InvalidPassword('Invalid password');
     }
 
-    const logger = this.logger.sub({ email: loginData.email }, '[initiateLogin] ');
+    const logger = this.logger.sub({email: loginData.email}, '[initiateLogin] ');
 
     logger.debug('Login user');
 
@@ -285,7 +306,7 @@ export class UserService implements UserServiceInterface {
       throw new UserNotFound('User is not found');
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[verifyLogin] ');
+    const logger = this.logger.sub({email: user.email}, '[verifyLogin] ');
 
     const inputVerification = {
       verificationId: inputData.verification.id,
@@ -320,7 +341,40 @@ export class UserService implements UserServiceInterface {
       });
     }
 
-    return transformers.transformVerifiedToken(token);
+    let resultWallets: Array<NewWallet> = [];
+    if (user.firstLogin && user.oldId) {
+      user.firstLogin = false;
+      logger.debug('Generate eth wallet');
+
+      const mnemonic = this.web3Client.generateMnemonic();
+      const salt = bcrypt.genSaltSync();
+      const account = this.web3Client.getAccountByMnemonicAndSalt(mnemonic, salt);
+
+      user.addEthWallet({
+        ticker: 'ETH',
+        address: account.address,
+        balance: '0',
+        salt
+      });
+
+      logger.debug('Initialization of KYC verification');
+
+      user.kycInitResult = await this.kycProvider.init(user);
+      user.isVerified = true;
+      await getConnection().getMongoRepository(Investor).save(user);
+
+      resultWallets = [
+        {
+          ticker: 'ETH',
+          address: account.address,
+          balance: '0',
+          mnemonic: mnemonic,
+          privateKey: account.privateKey
+        }
+      ];
+    }
+
+    return transformers.transformVerifiedToken(token, resultWallets);
   }
 
   async activate(activationData: ActivationUserData): Promise<ActivationResult> {
@@ -336,7 +390,7 @@ export class UserService implements UserServiceInterface {
       throw Error('User is activated already');
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[activate] ');
+    const logger = this.logger.sub({email: user.email}, '[activate] ');
 
     const inputVerification = {
       verificationId: activationData.verificationId,
@@ -407,7 +461,7 @@ export class UserService implements UserServiceInterface {
 
     logger.debug('Send email notification');
 
-    const template = await this.emailTemplateService.getRenderedTemplate('success-signup', { name: user.name });
+    const template = await this.emailTemplateService.getRenderedTemplate('success-signup', {name: user.name});
 
     if (template !== '') {
       this.emailQueue.addJob({
@@ -440,7 +494,7 @@ export class UserService implements UserServiceInterface {
       throw new InvalidPassword('Invalid password');
     }
 
-    this.logger.debug('[initiateChangePassword] Initiate verification', { meta: { email: user.email } });
+    this.logger.debug('[initiateChangePassword] Initiate verification', {meta: {email: user.email}});
 
     const verificationData = await this.verificationClient.initiateVerification(
       user.defaultVerificationMethod,
@@ -450,7 +504,7 @@ export class UserService implements UserServiceInterface {
         template: {
           fromEmail: config.email.from.general,
           subject: `Here’s the Code to Change Your Password at ${config.app.companyName}`,
-          body: await this.emailTemplateService.getRenderedTemplate('init-change-password', { name: user.name })
+          body: await this.emailTemplateService.getRenderedTemplate('init-change-password', {name: user.name})
         },
         generateCode: {
           length: 6,
@@ -475,7 +529,7 @@ export class UserService implements UserServiceInterface {
       throw new InvalidPassword('Invalid password');
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[verifyChangePassword] ');
+    const logger = this.logger.sub({email: user.email}, '[verifyChangePassword] ');
 
     const payload = {
       scope: CHANGE_PASSWORD_SCOPE
@@ -490,7 +544,7 @@ export class UserService implements UserServiceInterface {
 
     logger.debug('Send notification');
 
-    const template = await this.emailTemplateService.getRenderedTemplate('success-password-change', { name: user.name });
+    const template = await this.emailTemplateService.getRenderedTemplate('success-password-change', {name: user.name});
 
     if (template !== '') {
       this.emailQueue.addJob({
@@ -507,7 +561,7 @@ export class UserService implements UserServiceInterface {
       email: user.email.toLowerCase(),
       login: user.email.toLowerCase(),
       password: user.passwordHash,
-      sub: params.verification.verificationId,
+      sub: params.verification.verificationId
     };
 
     if (user.scope) {
@@ -538,7 +592,7 @@ export class UserService implements UserServiceInterface {
       throw new UserNotFound('User is not found');
     }
 
-    this.logger.debug('[initiateResetPassword] Initiate verification', { meta: { email: params.email } });
+    this.logger.debug('[initiateResetPassword] Initiate verification', {meta: {email: params.email}});
 
     const verificationData = await this.verificationClient.initiateVerification(
       user.defaultVerificationMethod,
@@ -547,7 +601,7 @@ export class UserService implements UserServiceInterface {
         issuer: config.app.companyName,
         template: {
           fromEmail: config.email.from.general,
-          body: await this.emailTemplateService.getRenderedTemplate('init-reset-password', { name: user.name }),
+          body: await this.emailTemplateService.getRenderedTemplate('init-reset-password', {name: user.name}),
           subject: `Here’s the Code to Reset Your Password at ${config.app.companyName}`
         },
         generateCode: {
@@ -577,7 +631,7 @@ export class UserService implements UserServiceInterface {
       throw new UserNotFound('User is not found');
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[verifyResetPassword] ');
+    const logger = this.logger.sub({email: user.email}, '[verifyResetPassword] ');
 
     const payload = {
       scope: RESET_PASSWORD_SCOPE
@@ -601,7 +655,7 @@ export class UserService implements UserServiceInterface {
 
     logger.debug('Send notification');
 
-    const template = await this.emailTemplateService.getRenderedTemplate('success-password-reset', { name: user.name });
+    const template = await this.emailTemplateService.getRenderedTemplate('success-password-reset', {name: user.name});
 
     if (template !== '') {
       this.emailQueue.addJob({
@@ -619,7 +673,7 @@ export class UserService implements UserServiceInterface {
     let result = [];
 
     for (let email of params.emails as Array<string>) {
-      const user = await getConnection().getMongoRepository(Investor).findOne({ email: email.toLowerCase() });
+      const user = await getConnection().getMongoRepository(Investor).findOne({email: email.toLowerCase()});
       if (user) {
         throw new InviteIsNotAllowed(`{{email}} account already exists`, {
           email: email.toLowerCase()
@@ -627,7 +681,7 @@ export class UserService implements UserServiceInterface {
       }
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[invite] ');
+    const logger = this.logger.sub({email: user.email}, '[invite] ');
 
     user.checkAndUpdateInvitees(params.emails);
 
@@ -659,7 +713,7 @@ export class UserService implements UserServiceInterface {
   }
 
   private async initiate2faVerification(user: Investor, scope: string): Promise<InitiateResult> {
-    this.logger.debug('[initiate2faVerification] Initiate verification', { meta: { email: user.email } });
+    this.logger.debug('[initiate2faVerification] Initiate verification', {meta: {email: user.email}});
 
     return await this.verificationClient.initiateVerification(
       AUTHENTICATOR_VERIFICATION,
@@ -691,7 +745,7 @@ export class UserService implements UserServiceInterface {
       throw new AuthenticatorError('Authenticator is enabled already');
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[verifyEnable2fa] ');
+    const logger = this.logger.sub({email: user.email}, '[verifyEnable2fa] ');
 
     const payload = {
       scope: ENABLE_2FA_SCOPE
@@ -725,7 +779,7 @@ export class UserService implements UserServiceInterface {
       throw new AuthenticatorError('Authenticator is disabled already');
     }
 
-    const logger = this.logger.sub({ email: user.email }, '[verifyEnable2fa] ');
+    const logger = this.logger.sub({email: user.email}, '[verifyEnable2fa] ');
 
     const payload = {
       scope: DISABLE_2FA_SCOPE
@@ -761,4 +815,4 @@ export class UserService implements UserServiceInterface {
 }
 
 const UserServiceType = Symbol('UserServiceInterface');
-export { UserServiceType };
+export {UserServiceType};

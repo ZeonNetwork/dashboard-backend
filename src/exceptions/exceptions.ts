@@ -26,5 +26,6 @@ export class InsufficientEthBalance extends ErrorWithFields {}
 export class MaxVerificationsAttemptsReached extends ErrorWithFields {}
 export class IncorrectMnemonic extends ErrorWithFields {}
 export class UserActivated extends ErrorWithFields {}
+export class WrongImportSecret extends ErrorWithFields {}
 
 export class KycShuftiProInvalidSignature extends ErrorWithFields {}

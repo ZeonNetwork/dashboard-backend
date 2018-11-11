@@ -26,6 +26,10 @@ export function createUser(req: Request, res: Response, next: NextFunction) {
     // firstName: Joi.string().min(3).required(),
     // lastName: Joi.string().min(3).required(),
     email: Joi.string().email().required(),
+    importSecret: Joi.string(),
+    oldId: Joi.number(),
+    icoBalance: Joi.number(),
+    createdAt: Joi.number(),
     // phone: Joi.string().required().regex(phoneNumberRegex).options({
     //   language: {
     //     string: {
@@ -61,6 +65,10 @@ export function createUser(req: Request, res: Response, next: NextFunction) {
     // firstName: Joi.string().min(3).required(),
     // lastName: Joi.string().min(3).required(),
     email: Joi.string().email().required(),
+    importSecret: Joi.string(),
+    oldId: Joi.number(),
+    icoBalance: Joi.number(),
+    createdAt: Joi.number(),
     // phone: Joi.string().optional().regex(phoneNumberRegex).options({
     //   language: {
     //     string: {

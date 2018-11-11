@@ -64,6 +64,18 @@ export class Investor {
   @Column()
   scope: string;
 
+  @Column()
+  oldId: number;
+
+  @Column()
+  firstLogin: boolean;
+
+  @Column()
+  icoBalance: number;
+
+  @Column()
+  createdAt: number;
+
   @Column(type => Verification)
   verification: Verification;
 
@@ -91,7 +103,7 @@ export class Investor {
     user.dob = data.dob;
     user.agreeTos = data.agreeTos;
     user.passwordHash = data.passwordHash;
-    user.isVerified = false;
+    user.isVerified = !!data.oldId;
     user.kycStatus = config.kyc.enabled ? KYC_STATUS_NOT_VERIFIED : config.kyc.status.default;
     user.referralCode = base64encode(user.email);
     user.referral = data.referral;
@@ -103,6 +115,10 @@ export class Investor {
     user.invitees = [];
     user.source = data.source;
     user.scope = data.scope;
+    user.oldId = data.oldId;
+    user.firstLogin = data.firstLogin;
+    user.icoBalance = data.icoBalance;
+    user.createdAt = data.createdAt || Date.now();
     return user;
   }
 
