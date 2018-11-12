@@ -293,6 +293,7 @@ declare interface UserInfo {
   country: string;
   dob: string;
   phone: string;
+  icoBalance: number;
 }
 
 interface TransactionInput {

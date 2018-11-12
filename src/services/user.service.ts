@@ -809,7 +809,8 @@ export class UserService implements UserServiceInterface {
       lastName: user.lastName,
       country: user.country,
       dob: user.dob,
-      phone: user.phone
+      phone: user.phone,
+      icoBalance: user.icoBalance
     };
   }
 }
