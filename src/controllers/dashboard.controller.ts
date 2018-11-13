@@ -158,9 +158,9 @@ export class DashboardController {
 
     logger.debug('Check from whitelist');
 
-    if (!(await this.web3Client.isAllowed(req.user.ethWallet.address))) {
-      throw Error(`Error. Please try again in few minutes. Contact ${config.app.companyName} Team if you continue to receive this`);
-    }
+    // if (!(await this.web3Client.isAllowed(req.user.ethWallet.address))) {
+    //   throw Error(`Error. Please try again in few minutes. Contact ${config.app.companyName} Team if you continue to receive this`);
+    // }
 
     logger.debug('Initiate verification');
 
@@ -222,9 +222,9 @@ export class DashboardController {
 
     logger.debug('Check from whitelist');
 
-    if (!(await this.web3Client.isAllowed(req.user.ethWallet.address))) {
-      throw Error(`Error. Please try again in few minutes. Contact ${config.app.companyName} Team if you continue to receive this`);
-    }
+    // if (!(await this.web3Client.isAllowed(req.user.ethWallet.address))) {
+    //   throw Error(`Error. Please try again in few minutes. Contact ${config.app.companyName} Team if you continue to receive this`);
+    // }
 
     const payload = {
       scope: INVEST_SCOPE,
