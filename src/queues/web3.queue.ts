@@ -18,7 +18,7 @@ export class Web3Queue implements Web3QueueInterface {
   constructor(
     @inject(Web3ClientType) private web3Client: Web3ClientInterface
   ) {
-    this.queueWrapper = new Bull('check_whitelist', config.redis.url);
+    this.queueWrapper = new Bull('check_whitelist', {redis: {port: parseInt(config.redis.port, 10), host: config.redis.host, password: config.redis.password}});
     this.queueWrapper.process((job) => {
       return this.checkWhiteList(job);
     });

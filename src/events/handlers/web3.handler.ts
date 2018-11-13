@@ -40,8 +40,16 @@ export class Web3Handler implements Web3HandlerInterface {
   ) {
     this.redisClient = redis.createClient({
       url: config.redis.url,
-      password: config.redis.password,
+      no_ready_check: true,
+      // password: config.redis.password,
       prefix: config.redis.prefix
+    });
+    this.redisClient.auth(config.redis.password, function(err, doc) {
+      if (err) {
+        console.log('NOT Authenticated');
+      } else if (doc === 'OK') {
+        console.log('Authenticated');
+      }
     });
     this.redisGetAsync = promisify(this.redisClient.get).bind(this.redisClient);
     this.redisSetAsync = promisify(this.redisClient.set).bind(this.redisClient);
@@ -75,7 +83,7 @@ export class Web3Handler implements Web3HandlerInterface {
       this.attachHandlers();
     }
 
-    this.queueWrapper = new Bull('check_transaction', config.redis.url);
+    this.queueWrapper = new Bull('check_transaction', {redis: {port: parseInt(config.redis.port, 10), host: config.redis.host, password: config.redis.password}});
     this.queueWrapper.process((job) => {
       return this.checkAndRestoreTransactions(job);
     });

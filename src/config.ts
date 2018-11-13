@@ -9,6 +9,8 @@ const {
   LOGGING_COLORIZE,
   REDIS_URL,
   REDIS_PASSWORD,
+  REDIS_HOST_FOR_BULL,
+  REDIS_PORT_FOR_BULL,
   REDIS_PREFIX,
   HTTP_SERVER,
   PORT,
@@ -101,6 +103,8 @@ export default {
   },
   redis: {
     url: REDIS_URL || 'redis://redis:6379',
+    host: REDIS_HOST_FOR_BULL,
+    port: REDIS_PORT_FOR_BULL,
     password: REDIS_PASSWORD,
     prefix: REDIS_PREFIX || 'zeon_network'
   },
