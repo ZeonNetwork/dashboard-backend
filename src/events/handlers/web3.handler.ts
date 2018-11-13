@@ -40,6 +40,7 @@ export class Web3Handler implements Web3HandlerInterface {
   ) {
     this.redisClient = redis.createClient({
       url: config.redis.url,
+      password: config.redis.password,
       prefix: config.redis.prefix
     });
     this.redisGetAsync = promisify(this.redisClient.get).bind(this.redisClient);

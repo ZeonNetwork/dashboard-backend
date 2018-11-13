@@ -8,6 +8,7 @@ const {
   LOGGING_FORMAT,
   LOGGING_COLORIZE,
   REDIS_URL,
+  REDIS_PASSWORD,
   REDIS_PREFIX,
   HTTP_SERVER,
   PORT,
@@ -100,6 +101,7 @@ export default {
   },
   redis: {
     url: REDIS_URL || 'redis://redis:6379',
+    password: REDIS_PASSWORD,
     prefix: REDIS_PREFIX || 'zeon_network'
   },
   throttler: {
