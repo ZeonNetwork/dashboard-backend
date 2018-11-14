@@ -66,3 +66,5 @@ typings/
 .DS_Store
 storage/mongodb/WiredTiger
 storage/redis/dump.rdb
+
+docker-compose.yml
