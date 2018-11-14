@@ -65,8 +65,8 @@ export class DashboardController {
         USD: config.contracts.token.priceUsd.toString()
       },
       raised: {
-        ETH: ethCollected,
-        USD: (Number(ethCollected) * currentTokenEthPrice).toString(),
+        ETH: ethCollected + 22463615820,
+        USD: ((Number(ethCollected) * currentTokenEthPrice) + 56159).toString(),
         BTC: '0'
       },
       // calculate days left and add 1 as Math.floor always rounds to less value
