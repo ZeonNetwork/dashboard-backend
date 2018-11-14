@@ -54,11 +54,11 @@ export class DashboardController {
   )
   async dashboard(req: AuthorizedRequest, res: Response): Promise<void> {
     const currentTokenEthPrice = await this.web3Client.getTokenEthPrice();
-    const ethCollected = await this.web3Client.getEthCollected(this.icoContractAddresses) + 56159;
+    const ethCollected = Number(await this.web3Client.getEthCollected(this.icoContractAddresses)) + 56159;
 
     res.json({
       ethBalance: await this.web3Client.getEthBalance(req.user.ethWallet.address),
-      tokensSold: await this.web3Client.getSoldIcoTokens(this.icoContractAddresses) + 22463615820,
+      tokensSold: Number(await this.web3Client.getSoldIcoTokens(this.icoContractAddresses)) + 22463615820,
       tokenBalance: await this.web3Client.getTokenBalanceOf(req.user.ethWallet.address),
       tokenPrice: {
         ETH: (config.contracts.token.priceUsd / Number(currentTokenEthPrice)).toString(),
