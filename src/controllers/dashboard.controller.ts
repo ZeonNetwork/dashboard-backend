@@ -54,19 +54,19 @@ export class DashboardController {
   )
   async dashboard(req: AuthorizedRequest, res: Response): Promise<void> {
     const currentTokenEthPrice = await this.web3Client.getTokenEthPrice();
-    const ethCollected = await this.web3Client.getEthCollected(this.icoContractAddresses);
+    const ethCollected = await this.web3Client.getEthCollected(this.icoContractAddresses) + 56159;
 
     res.json({
       ethBalance: await this.web3Client.getEthBalance(req.user.ethWallet.address),
-      tokensSold: await this.web3Client.getSoldIcoTokens(this.icoContractAddresses),
+      tokensSold: await this.web3Client.getSoldIcoTokens(this.icoContractAddresses) + 22463615820,
       tokenBalance: await this.web3Client.getTokenBalanceOf(req.user.ethWallet.address),
       tokenPrice: {
         ETH: (config.contracts.token.priceUsd / Number(currentTokenEthPrice)).toString(),
         USD: config.contracts.token.priceUsd.toString()
       },
       raised: {
-        ETH: ethCollected + 22463615820,
-        USD: ((Number(ethCollected) * currentTokenEthPrice) + 56159).toString(),
+        ETH: ethCollected,
+        USD: (Number(ethCollected) * currentTokenEthPrice).toString(),
         BTC: '0'
       },
       // calculate days left and add 1 as Math.floor always rounds to less value
