@@ -314,7 +314,7 @@ declare interface UserServiceInterface {
   verifyEnable2fa(user: any, params: VerificationInput): Promise<Enable2faResult>;
   initiateDisable2fa(user: any): Promise<BaseInitiateResult>;
   verifyDisable2fa(user: any, params: VerificationInput): Promise<Enable2faResult>;
-  initiateResetPassword(params: ResetPasswordInput): Promise<BaseInitiateResult>;
+  initiateResetPassword(params: ResetPasswordInput, ip: string): Promise<BaseInitiateResult>;
   verifyResetPassword(params: ResetPasswordInput): Promise<ValidationResult>;
   verifyLogin(inputData: VerifyLoginInput): Promise<VerifyLoginResult>;
   invite(user: any, params: any): Promise<InviteResultArray>;

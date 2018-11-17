@@ -583,7 +583,7 @@ export class UserService implements UserServiceInterface {
     return loginResult;
   }
 
-  async initiateResetPassword(params: ResetPasswordInput): Promise<BaseInitiateResult> {
+  async initiateResetPassword(params: ResetPasswordInput, ip: string): Promise<BaseInitiateResult> {
     const user = await getConnection().getMongoRepository(Investor).findOne({
       email: params.email.toLowerCase()
     });
@@ -601,7 +601,10 @@ export class UserService implements UserServiceInterface {
         issuer: config.app.companyName,
         template: {
           fromEmail: config.email.from.general,
-          body: await this.emailTemplateService.getRenderedTemplate('init-reset-password', {name: user.name}),
+          body: await this.emailTemplateService.getRenderedTemplate('init-reset-password', {
+            name: user.name,
+            datetime: new Date().toUTCString(),
+            ip: ip}),
           subject: `Here’s the Code to Reset Your Password at ${config.app.companyName}`
         },
         generateCode: {

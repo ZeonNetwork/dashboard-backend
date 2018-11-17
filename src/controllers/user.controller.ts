@@ -118,7 +118,12 @@ export class UserController {
     'ResetPasswordInitiateValidation'
   )
   async initiateResetPassword(req: Request, res: Response): Promise<void> {
-    res.json(await this.userService.initiateResetPassword(req.body));
+    let ip = req.header(config.app.clientIpHeader as string) || req.ip;
+
+    if (ip.substr(0, 7) === '::ffff:') {
+      ip = ip.substr(7);
+    }
+    res.json(await this.userService.initiateResetPassword(req.body, ip));
   }
 
   @httpPost(
