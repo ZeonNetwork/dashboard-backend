@@ -58,6 +58,7 @@ export class UserController {
     'InitiateLoginValidation'
   )
   async initiateLogin(req: Request, res: Response): Promise<void> {
+    console.log(' req.header', req.header);
     let ip = req.header(config.app.clientIpHeader as string) || req.ip;
 
     if (ip.substr(0, 7) === '::ffff:') {
