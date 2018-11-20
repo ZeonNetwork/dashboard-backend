@@ -257,7 +257,7 @@ export class Web3Client implements Web3ClientInterface {
   }
 
   async getTokenEthPrice(): Promise<number> {
-    return (await this.ico.methods.ethUsdRate().call());
+    return (await this.ico.methods.ethUsdRate().call()) / 100;
   }
 
   sufficientBalance(input: TransactionInput): Promise<boolean> {
