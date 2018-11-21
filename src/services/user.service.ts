@@ -1,8 +1,8 @@
-import { AuthClientType } from './auth.client';
-import { VerificationClientType } from './verify.client';
-import { Web3ClientType, Web3ClientInterface } from './web3.client';
-import { EmailQueueType, EmailQueueInterface } from '../queues/email.queue';
-import { injectable, inject } from 'inversify';
+import {AuthClientType} from './auth.client';
+import {VerificationClientType} from './verify.client';
+import {Web3ClientType, Web3ClientInterface} from './web3.client';
+import {EmailQueueType, EmailQueueInterface} from '../queues/email.queue';
+import {injectable, inject} from 'inversify';
 import 'reflect-metadata';
 import * as uuid from 'node-uuid';
 
@@ -14,15 +14,15 @@ import {
   TokenNotFound, ReferralDoesNotExist, ReferralIsNotActivated, AuthenticatorError, InviteIsNotAllowed, UserActivated, WrongImportSecret
 } from '../exceptions/exceptions';
 import config from '../config';
-import { Investor } from '../entities/investor';
-import { VerifiedToken } from '../entities/verified.token';
-import { AUTHENTICATOR_VERIFICATION, EMAIL_VERIFICATION, Verification } from '../entities/verification';
+import {Investor} from '../entities/investor';
+import {VerifiedToken} from '../entities/verified.token';
+import {AUTHENTICATOR_VERIFICATION, EMAIL_VERIFICATION, Verification} from '../entities/verification';
 import * as transformers from '../transformers/transformers';
-import { getConnection } from 'typeorm';
+import {getConnection} from 'typeorm';
 import * as bcrypt from 'bcrypt-nodejs';
-import { Logger } from '../logger';
-import { EmailTemplateServiceType } from './email.template.service';
-import { KycProviderType } from '../types';
+import {Logger} from '../logger';
+import {EmailTemplateServiceType} from './email.template.service';
+import {KycProviderType} from '../types';
 
 export const ACTIVATE_USER_SCOPE = 'activate_user';
 export const LOGIN_USER_SCOPE = 'login_user';
@@ -131,7 +131,7 @@ export class UserService implements UserServiceInterface {
         }
       });
       verificationId = verification.verificationId;
-    }else {
+    } else {
       verificationId = uuid.v4();
       userData.firstLogin = true;
     }
@@ -604,7 +604,8 @@ export class UserService implements UserServiceInterface {
           body: await this.emailTemplateService.getRenderedTemplate('init-reset-password', {
             name: user.name,
             datetime: new Date().toUTCString(),
-            ip: ip}),
+            ip: ip
+          }),
           subject: `Here’s the Code to Reset Your Password at ${config.app.companyName}`
         },
         generateCode: {
@@ -814,7 +815,7 @@ export class UserService implements UserServiceInterface {
       country: user.country,
       dob: user.dob,
       phone: user.phone,
-      icoBalance: user.icoBalance
+      icoBalance: user.oldWallet ? Number(await this.web3Client.getTokenBalanceOf(user.oldWallet)) : null
     };
   }
 }
