@@ -29,6 +29,9 @@ export class Investor {
   lastName: string;
 
   @Column()
+  oldWallet: string;
+
+  @Column()
   phone: string;
 
   @Column()

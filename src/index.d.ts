@@ -290,6 +290,7 @@ declare interface UserInfo {
   defaultVerificationMethod: string;
   firstName: string;
   lastName: string;
+  oldWallet: string;
   country: string;
   dob: string;
   phone: string;

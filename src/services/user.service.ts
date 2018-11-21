@@ -810,6 +810,7 @@ export class UserService implements UserServiceInterface {
       defaultVerificationMethod: user.defaultVerificationMethod,
       firstName: user.firstName,
       lastName: user.lastName,
+      oldWallet: user.oldWallet,
       country: user.country,
       dob: user.dob,
       phone: user.phone,
