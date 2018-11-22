@@ -815,7 +815,7 @@ export class UserService implements UserServiceInterface {
       country: user.country,
       dob: user.dob,
       phone: user.phone,
-      icoBalance: user.oldWallet ? Number(await this.web3Client.getTokenBalanceOf(user.oldWallet)) : null
+      icoBalance: user.oldWallet ? Number(await this.web3Client.getTokenBalanceOf(user.oldWallet)) : user.icoBalance
     };
   }
 }
