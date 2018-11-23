@@ -124,7 +124,6 @@ export class Web3Handler implements Web3HandlerInterface {
    * @returns {Promise<void>}
    */
   async saveConfirmedTransaction(transactionData: any, blockData: any, transactionReceipt: any): Promise<void> {
-    console.log('saveConfirmedTransaction');
     const tx = await this.txService.getTxByTxData(transactionData);
     const status = this.txService.getTxStatusByReceipt(transactionReceipt);
 
@@ -141,7 +140,7 @@ export class Web3Handler implements Web3HandlerInterface {
         await this.txService.updateTx(tx, status, blockData);
         return;
       }
-
+      console.log('saveConfirmedTransaction');
       await this.txService.createAndSaveTransaction(transactionData, status, blockData);
     }
   }
