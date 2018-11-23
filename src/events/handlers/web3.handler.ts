@@ -102,10 +102,11 @@ export class Web3Handler implements Web3HandlerInterface {
     }
 
     const blockData = await this.web3.eth.getBlock(data.hash, true);
-    if (!blockData) {
+    if (!blockData || !blockData.transactions || !blockData.transactions.length) {
       console.log('NOblockData in processNewBlockHeaders');
       return;
     }
+    console.log('BLOCK number at processNewBlockHeaders', blockData.transactions[0].blockNumber);
     const transactions = blockData.transactions;
     for (let transaction of transactions) {
       const transactionReceipt = await this.web3.eth.getTransactionReceipt(transaction.hash);
@@ -243,39 +244,50 @@ export class Web3Handler implements Web3HandlerInterface {
   }
 
   async checkAndRestoreTransactions(job: any): Promise<boolean> {
-    const transferEvents = await this.token.getPastEvents('Transfer', { fromBlock: 0 });
-
+    console.log('checkAndRestoreTransactions1');
+    const offsetBlock = config.web3.blockOffset;
+    const currentBlock = await this.web3.eth.getBlockNumber();
+    console.log('checkAndRestoreTransactions2');
+    const lastCheckedBlock = await this.redisGetAsync('lastCheckedBlock');
+    const startBlock = lastCheckedBlock ? lastCheckedBlock : config.web3.startBlock;
+    const latestCalculatedBlock = startBlock + offsetBlock;
+    const stopBlock = latestCalculatedBlock > currentBlock ? currentBlock : latestCalculatedBlock;
+    console.log('checkAndRestoreTransactions3');
+    const transferEvents = await this.token.getPastEvents('Transfer', { fromBlock: startBlock, toBlock: stopBlock });
+    console.log('checkAndRestoreTransactions4');
     for (let event of transferEvents) {
       await this.processTokenTransfer(event);
     }
-
-    const referralEvents = await this.ico.getPastEvents('NewReferralTransfer', { fromBlock: 0 });
-
+    console.log('checkAndRestoreTransactions5');
+    const referralEvents = await this.ico.getPastEvents('NewReferralTransfer', { fromBlock: startBlock, toBlock: stopBlock });
+    console.log('checkAndRestoreTransactions6');
     for (let event of referralEvents) {
       await this.processReferralTransfer(event);
     }
-
-    const currentBlock = await this.web3.eth.getBlockNumber();
-    const lastCheckedBlock = await this.redisGetAsync('lastCheckedBlock');
-    const startBlock = lastCheckedBlock ? lastCheckedBlock : config.web3.startBlock;
-
-    for (let i = startBlock - config.web3.blockOffset; i < currentBlock; i++) {
+    console.log('checkAndRestoreTransactions7');
+    for (let i = startBlock; i < stopBlock; i++) {
+      console.log('checkAndRestoreTransaction8', i);
       const blockData = await this.web3.eth.getBlock(i, true);
-      if (!blockData) {
+      console.log('checkAndRestoreTransactions9');
+      if (!blockData || !blockData.transactions || !blockData.transactions.length) {
         console.log('NOblockData in checkAndRestoreTransactions');
         return;
       }
+      console.log('BLOCK number at checkAndRestoreTransactions', blockData.transactions[0].blockNumber);
       const transactions = blockData.transactions;
+      console.log('checkAndRestoreTransactions10');
       for (let transaction of transactions) {
+        console.log('checkAndRestoreTransactions11');
         const transactionReceipt = await this.web3.eth.getTransactionReceipt(transaction.hash);
+        console.log('checkAndRestoreTransactions12');
         if (transactionReceipt) {
+          console.log('checkAndRestoreTransactions13');
           await this.saveConfirmedTransaction(transaction, blockData, transactionReceipt);
         }
       }
+      await this.redisSetAsync('lastCheckedBlock', i);
     }
-
-    await this.redisSetAsync('lastCheckedBlock', currentBlock);
-
+    console.log('checkAndRestoreTransactions14');
     return true;
   }
 
