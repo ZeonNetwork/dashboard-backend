@@ -95,12 +95,17 @@ export class Web3Handler implements Web3HandlerInterface {
   }
 
   async processNewBlockHeaders(data: any): Promise<void> {
+    console.log('processNewBlockHeaders');
     if (!data.number) {
       // skip pending blocks
       return;
     }
 
     const blockData = await this.web3.eth.getBlock(data.hash, true);
+    if (!blockData) {
+      console.log('NOblockData in processNewBlockHeaders');
+      return;
+    }
     const transactions = blockData.transactions;
     for (let transaction of transactions) {
       const transactionReceipt = await this.web3.eth.getTransactionReceipt(transaction.hash);
@@ -119,6 +124,7 @@ export class Web3Handler implements Web3HandlerInterface {
    * @returns {Promise<void>}
    */
   async saveConfirmedTransaction(transactionData: any, blockData: any, transactionReceipt: any): Promise<void> {
+    console.log('saveConfirmedTransaction');
     const tx = await this.txService.getTxByTxData(transactionData);
     const status = this.txService.getTxStatusByReceipt(transactionReceipt);
 
@@ -256,6 +262,10 @@ export class Web3Handler implements Web3HandlerInterface {
 
     for (let i = startBlock - config.web3.blockOffset; i < currentBlock; i++) {
       const blockData = await this.web3.eth.getBlock(i, true);
+      if (!blockData) {
+        console.log('NOblockData in checkAndRestoreTransactions');
+        return;
+      }
       const transactions = blockData.transactions;
       for (let transaction of transactions) {
         const transactionReceipt = await this.web3.eth.getTransactionReceipt(transaction.hash);
