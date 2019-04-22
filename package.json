@@ -2,11 +2,11 @@
   "name": "dashboard-backend",
   "version": "1.0.0",
   "scripts": {
-    "start": "nodemon -w ./src -e ts ./src/bin/www --exec ts-node",
+    "start": "TSC_NONPOLLING_WATCHER=true nodemon -w ./src -e ts ./src/bin/www --exec ts-node",
     "lint": "tslint './src/**/*.ts'",
     "lintFix": "tslint --fix './src/**/*.ts'",
     "test": "node -v",
-    "build": "tsc -p tsconfig.build.json --outDir dist",
+    "build": "TSC_NONPOLLING_WATCHER=true tsc -p tsconfig.build.json --outDir dist",
     "serve": "node ./dist/bin/www.js"
   },
   "nyc": {
