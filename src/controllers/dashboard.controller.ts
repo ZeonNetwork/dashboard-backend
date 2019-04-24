@@ -130,6 +130,12 @@ export class DashboardController {
       throw new IncorrectMnemonic('Not correct mnemonic phrase');
     }
 
+    let ip = req.header(config.app.clientIpHeader as string) || req.ip;
+
+    if (ip.substr(0, 7) === '::ffff:') {
+      ip = ip.substr(7);
+    }
+
     const logger = this.logger.sub({ email: req.user.email }, '[investInitiate] ');
 
     if (!req.body.gasPrice) {
@@ -172,7 +178,7 @@ export class DashboardController {
         template: {
           fromEmail: config.email.from.general,
           subject: `You Purchase Validation Code to Use at ${config.app.companyName}`,
-          body: await this.emailTemplateService.getRenderedTemplate('init-buy-tokens', { name: req.user.name })
+          body: await this.emailTemplateService.getRenderedTemplate('init-buy-tokens', { name: req.user.name, ip })
         },
         generateCode: {
           length: 6,
